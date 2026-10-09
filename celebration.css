@@ -1,0 +1,94 @@
+.celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, rgba(255,248,222,.96) 0%, rgba(255,233,170,.72) 48%, rgba(255,248,228,.46) 100%);
+}
+.celebration[hidden] { display: none !important; }
+.celebration-glow {
+  position: absolute;
+  width: 180vmax;
+  height: 180vmax;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg 18deg, rgba(255,206,82,.23) 18deg 36deg);
+  animation: celebration-rays 30s linear infinite;
+  mask-image: radial-gradient(circle, black 0%, transparent 58%);
+}
+.celebration-card {
+  position: relative;
+  z-index: 2;
+  width: min(90vw, 760px);
+  text-align: center;
+  color: #79421f;
+  filter: drop-shadow(0 14px 26px rgba(131,79,24,.12));
+}
+.is-celebrating .celebration-card { animation: celebration-pop .6s cubic-bezier(.2,1.35,.35,1) both; }
+.is-celebrating:not(.is-final) .celebration-card { animation-duration: .25s; }
+.celebration-kicker {
+  font-size: clamp(15px, 2.5vw, 24px);
+  font-weight: 800;
+  letter-spacing: .38em;
+  color: #b37625;
+  margin-bottom: 24px;
+}
+.celebration-portrait {
+  position: relative;
+  width: clamp(140px, 26vh, 230px);
+  height: clamp(140px, 26vh, 230px);
+  margin: auto;
+  border: 3px solid rgba(255,255,255,.92);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffdf3, #ffdda1);
+  box-shadow: 0 0 0 12px rgba(255,255,255,.3), 0 0 55px rgba(242,182,52,.42);
+}
+.celebration-portrait img { width: 100%; height: 100%; object-fit: contain; }
+.celebration-portrait span { position: absolute; right: -12px; top: -8px; color: #d99b23; font-size: 48px; text-shadow: 0 2px 0 white; }
+.celebration-title {
+  margin: 28px 0 12px;
+  font-size: clamp(26px, 5.5vw, 58px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  color: #cb5134;
+  text-shadow: 0 3px 0 white, 0 8px 20px rgba(155,66,21,.18);
+}
+.celebration-caption { margin: 0; font-size: clamp(12px, 2vw, 18px); font-weight: 600; color: #94734e; }
+.is-final .celebration-title { color: #b77916; }
+.is-final .celebration-portrait { box-shadow: 0 0 0 12px rgba(255,255,255,.4), 0 0 85px rgba(242,182,52,.75); }
+.celebration-confetti { position: absolute; inset: 0; z-index: 3; }
+.celebration-piece {
+  position: absolute;
+  top: -24px;
+  left: var(--x);
+  width: 10px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--color);
+  opacity: 0;
+  animation: celebration-fall var(--fall) var(--delay) ease-in both;
+}
+.celebration-piece.is-star { width: 18px; height: 18px; clip-path: polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 94%,50% 72%,21% 94%,32% 57%,2% 35%,39% 35%); }
+.is-preview .celebration-piece { animation-iteration-count: infinite; }
+@keyframes celebration-fall {
+  0% { transform: translate3d(0,-30px,0) rotate(0deg); opacity: 0; }
+  8% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate3d(var(--drift),110vh,0) rotate(var(--spin)); opacity: 0; }
+}
+@keyframes celebration-pop {
+  from { opacity: 0; transform: translateY(28px) scale(.68); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes celebration-rays { to { transform: rotate(360deg); } }
+@media (max-height: 500px) {
+  .celebration-portrait { width: 110px; height: 110px; }
+  .celebration-kicker { margin-bottom: 12px; }
+  .celebration-title { margin-top: 16px; font-size: clamp(24px,5vw,42px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .celebration-glow, .is-celebrating .celebration-card { animation: none; }
+  .celebration-piece { display: none; }
+}
