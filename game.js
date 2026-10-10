@@ -27,11 +27,8 @@
   const REST_SPEED = 140;    // 线上方且速度低于它才算“卡住”（被弹飞路过的不算）
   const REST_SPEED2 = REST_SPEED * REST_SPEED;
 
-  const MAX_TIER  = 9;      // 最大那只（大书记）的索引
-  const MAX_BONUS = 500;     // 两只大书记相撞的奖励分
-                             // （原来是 100 —— 合出全游戏最难的东西只给 100 分，太寒酸；
-                             //  而且它同时清掉两块最大的人物、相当于救一条命，值这个价）
-  const MAX_MERGE_GIVES_REVIVE = true;  // 两只大书记一起炸掉时，额外送一枚复活币
+  const MAX_TIER = 12;       // -2 号为最终隐藏人物
+  const CLEAR_REWARDS = { 0: 1000, '-1': 2000, '-2': 5000 };
   const FREEZE_MS = 130;     // 清场时的定格，让这一下有重量
   const REVIVE_STEP = 2000;  // 每累计多少分，发一枚复活币
   const MERGE_PAD = 0.8;     // 合成判定的接触容差（px）
@@ -160,11 +157,44 @@
     "file": "assets/characters/person-1.webp",
     "pc1": "#ecb65e",
     "pc2": "#baafa7"
+  },
+  {
+    "name": "0号隐藏人物",
+    "number": 0,
+    "r": 134,
+    "c1": "#51c7e8",
+    "c2": "#524e57",
+    "line": "rgba(74,51,37,.35)",
+    "file": "assets/characters/person-0.webp",
+    "pc1": "#51c7e8",
+    "pc2": "#524e57"
+  },
+  {
+    "name": "-1号隐藏人物",
+    "number": -1,
+    "r": 144,
+    "c1": "#ff637f",
+    "c2": "#643b37",
+    "line": "rgba(74,51,37,.35)",
+    "file": "assets/characters/person--1.webp",
+    "pc1": "#ff637f",
+    "pc2": "#643b37"
+  },
+  {
+    "name": "-2号隐藏人物",
+    "number": -2,
+    "r": 154,
+    "c1": "#6bdca1",
+    "c2": "#70665f",
+    "line": "rgba(74,51,37,.35)",
+    "file": "assets/characters/person--2.webp",
+    "pc1": "#6bdca1",
+    "pc2": "#70665f"
   }
 ];
 
   /* 合成出 tier 的得分（三角数） */
-  const MERGE_SCORE = [0, 1, 3, 6, 10, 15, 21, 28, 36, 45];
+  const MERGE_SCORE = [0, 1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 66, 78];
 
   /* 新人物的掉落权重（越小越常见） */
   const SPAWN_TIERS = [0, 1, 2, 3, 4];
@@ -322,6 +352,7 @@
     over: false,
     flash: 0,
     revives: 0,        // 本局还剩几枚复活币（重开清零）
+    achievementEarned: false,
     reviveGiven: 0,    // 本局已经发放过几次（用来判断跨过新的 2000 分）
     freeze: 0          // 命中定格剩余秒数
   };
@@ -596,6 +627,17 @@
 
     /* --- 处理合成 --- */
     if (merges.length) processMerges(merges);
+    checkAchievement();
+  }
+
+  function checkAchievement() {
+    if (state.achievementEarned) return;
+    const numbers = new Set(state.balls.filter(ball => !ball.dead).map(ball => FRUITS[ball.tier].number));
+    const hasTeam = [2, 3, 4].every(number => numbers.has(number));
+    if (hasTeam) {
+      state.achievementEarned = true;
+      if (window.DashujiCelebration) window.DashujiCelebration.showAchievement();
+    }
   }
 
   /* 撞击挤压：沿撞击法线压扁、垂直方向拉伸，做出果冻感 */
@@ -610,45 +652,36 @@
     for (let k = 0; k < merges.length; k++) {
       const a = merges[k][0];
       const b = merges[k][1];
+      // 清屏可能取消本帧已排队的其他合成，不能让被清掉的人物重新出现。
+      if (a.cleared || b.cleared) continue;
       const mx = (a.x + b.x) * 0.5;
       const my = (a.y + b.y) * 0.5;
       const tier = a.tier;
 
       if (tier >= MAX_TIER) {
-        /* 两只大书记 → 一起炸掉，拿一大笔奖励分（外加一枚复活币）。
-           注意：它同时清掉了两块最大的人物，是后期唯一的泄压阀，不能取消。
-           分数的飘字不用 addScore 那个普通的，下面单独给了「大字 +500」。 */
-        addScore(MAX_BONUS);
-        burst(mx, my, MAX_TIER, 90, 560);
-        burst(mx, my, MAX_TIER - 2, 42, 340);
-        Sound.bonus();
-        haptic(70);
-        state.flash = 1.4;                    // 比普通合成更亮的全屏闪
-        state.freeze = FREEZE_MS / 1000;      // 定格一下，让这一下有重量
-        state.floats.push({ x: mx, y: my - 74, text: '两个大书记 💥', life: 1.6 });
-        state.floats.push({ x: mx, y: my - 16, text: '+' + MAX_BONUS, life: 2.2, big: true });
-        if (MAX_MERGE_GIVES_REVIVE) {
-          state.revives++;
-          paintRevives(true);
-        }
+        clearBoard(null, mx, my, tier);
       } else {
         const nt = tier + 1;
         const nb = makeBall(mx, my, nt, (a.vx + b.vx) * 0.5, (a.vy + b.vy) * 0.5 - 60);
         /* 贴着墙合成时，新人物更大，先夹回场地内，避免瞬间穿墙 */
-        nb.x = clamp(nb.x, WALL + nb.r, W - WALL - nb.r);
-        nb.y = Math.min(nb.y, H - WALL - nb.r);
+        nb.x = clamp(nb.x, WALL + nb.rb, W - WALL - nb.rb);
+        nb.y = Math.min(nb.y, H - WALL - nb.rb);
         nb.px = nb.x;
         nb.py = nb.y;
         nb.landed = true;
         nb.popAt = performance.now();
         state.balls.push(nb);
 
-        addScore(MERGE_SCORE[nt], mx, my, '+' + MERGE_SCORE[nt]);
-        burst(mx, my, nt, 8 + nt * 2, 140 + nt * 22);
-        Sound.merge(nt);
-        haptic(6 + nt);
-        if (window.DashujiCelebration) window.DashujiCelebration.show(FRUITS[nt].number);
-        if (nt === MAX_TIER) state.flash = 1;
+        if (FRUITS[nt].number <= 0) {
+          clearBoard(nb, mx, my, nt);
+        } else {
+          addScore(MERGE_SCORE[nt], mx, my, '+' + MERGE_SCORE[nt]);
+          burst(mx, my, nt, 8 + nt * 2, 140 + nt * 22);
+          Sound.merge(nt);
+          haptic(6 + nt);
+          if (window.DashujiCelebration) window.DashujiCelebration.show(FRUITS[nt].number);
+          if (FRUITS[nt].number === 1) state.flash = 1;
+        }
       }
     }
 
@@ -658,6 +691,40 @@
       if (!state.balls[i].dead) alive.push(state.balls[i]);
     }
     state.balls = alive;
+  }
+
+  function clearBoard(keep, mx, my, tier) {
+    let exploded = 0;
+    for (const ball of state.balls) {
+      if (ball === keep) continue;
+      // 保留隐藏等级，才能攒下两只0、两只-1继续升级；已排队的隐藏合成也照常处理。
+      if (keep && FRUITS[ball.tier].number <= 0) {
+        ball.overTime = 0;
+        continue;
+      }
+      if (exploded++ < 18) burst(ball.x, ball.y, ball.tier, 8, 300);
+      ball.dead = true;
+      ball.cleared = true;
+    }
+    if (keep) {
+      keep.y = clamp(keep.y, DANGER_Y + keep.rb + 8, H - WALL - keep.rb);
+      keep.px = keep.x; keep.py = keep.y;
+      keep.vx = 0; keep.vy = 0; keep.overTime = 0;
+      syncParts(keep);
+    }
+    state.danger = false;
+    state.floats.length = 0;
+    const number = FRUITS[tier].number;
+    const bonus = CLEAR_REWARDS[number];
+    addScore(bonus);
+    burst(mx, my, tier, 70, 560);
+    Sound.bonus();
+    haptic(70);
+    state.flash = 1.2;
+    state.freeze = FREEZE_MS / 1000;
+    state.floats.push({x: W / 2, y: 270, text: '全场清屏！', life: 1.6});
+    state.floats.push({x: W / 2, y: 320, text: '+' + bonus, life: 2.2, big: true});
+    if (window.DashujiCelebration) window.DashujiCelebration.showClear(number, bonus);
   }
 
   /* ---------------------------------------------------------
@@ -877,6 +944,7 @@
     state.aimX = W / 2;
     state.revives = 0;        // 复活币只在本局有效，重开清零
     state.reviveGiven = 0;
+    state.achievementEarned = false;
     state.freeze = 0;
     state.pending = pickSpawnTier();
     state.next = pickSpawnTier(state.pending);
@@ -1130,22 +1198,26 @@
     chainCtx.setTransform(1, 0, 0, 1, 0, 0);
     chainCtx.clearRect(0, 0, cw, ch);
 
-    const slot = cw / FRUITS.length;
+    const columns = 7;
+    const rowHeight = ch / 2;
+    const slot = cw / columns;
     const r = slot * 0.36;
-    const cy = ch * 0.40;
 
     for (let i = 0; i < FRUITS.length; i++) {
-      const x = slot * (i + 0.5);
+      const row = Math.floor(i / columns);
+      const column = i % columns;
+      const x = slot * (column + 0.5);
+      const cy = row * rowHeight + rowHeight * .40;
       drawFruit(chainCtx, x, cy, r, i, 0, 1);
       chainCtx.fillStyle = '#8a7566';
       chainCtx.font = '600 16px system-ui, sans-serif';
       chainCtx.textAlign = 'center'; chainCtx.textBaseline = 'middle';
-      chainCtx.fillText(String(FRUITS[i].number), x, ch * .86);
-      if (i < FRUITS.length - 1) {
+      chainCtx.fillText(String(FRUITS[i].number), x, row * rowHeight + rowHeight * .86);
+      if (i < FRUITS.length - 1 && column < columns - 1) {
         chainCtx.save();
         chainCtx.globalAlpha = 0.45;
         chainCtx.fillStyle = '#b08a68';
-        chainCtx.font = '600 ' + Math.round(ch * 0.2) + 'px system-ui, sans-serif';
+        chainCtx.font = '600 ' + Math.round(rowHeight * 0.2) + 'px system-ui, sans-serif';
         chainCtx.textAlign = 'center';
         chainCtx.textBaseline = 'middle';
         chainCtx.fillText('›', x + slot * 0.5, cy);
@@ -1407,6 +1479,6 @@
   /* 调试句柄（控制台可用）：__DASHUJI__.state / .reset() / .drop() / .FRUITS / .render() */
   window.__DASHUJI__ = { state, reset, revive, settle, gameOver, tryDrop, stepPhysics, update, FRUITS,
                      render, resizeCanvas, shapeOf, makeBall, paintRevives, addScore,
-                     MAX_BONUS, REVIVE_STEP,
+                     MAX_TIER, CLEAR_REWARDS, REVIVE_STEP,
                      blurReady: () => !!blurImg };
 })();

@@ -14,7 +14,7 @@
 <title>合成大书记</title>
 <link rel="icon" href="assets/characters/person-1.webp" type="image/webp">
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="celebration.css">
+<link rel="stylesheet" href="celebration.css?v=20261010-2">
 </head>
 <body>
 
@@ -100,8 +100,8 @@
 
     <div class="chain-box">
       <span class="box-label">合成表</span>
-      <canvas id="chain" width="680" height="112" aria-label="合成顺序"></canvas>
-      <p class="chain-note">顺序：10 → 9 → 8 → 7 → 6 → 5 → 4 → 3 → 2 → 1<br>✨ 两个大书记撞在一起会一起炸掉，换 <strong>500 分</strong> + <strong>一枚复活币</strong></p>
+      <canvas id="chain" width="680" height="224" aria-label="合成顺序"></canvas>
+      <p class="chain-note">10 → 9 → 8 → 7 → 6 → 5 → 4 → 3 → 2 → 1 → 0 → -1 → -2<br>✨ 合成 0 / -1 / -2 号，分别奖励 <strong>1000 / 2000 / 5000 分</strong>，清掉普通人物，保留隐藏人物继续升级。</p>
     </div>
 
     <div class="actions">
@@ -147,21 +147,25 @@
 </div>
 
 <div class="celebration" id="celebration" hidden aria-live="polite" aria-atomic="true">
+  <div class="celebration-wave" aria-hidden="true"></div>
+  <div class="celebration-wave" aria-hidden="true"></div>
   <div class="celebration-glow" aria-hidden="true"></div>
   <div class="celebration-confetti" id="celebrationConfetti" aria-hidden="true"></div>
   <div class="celebration-card">
-    <div class="celebration-kicker">恭 喜 合 成</div>
+    <div class="celebration-kicker" id="celebrationKicker">恭 喜 合 成</div>
     <div class="celebration-portrait"><img id="celebrationPortrait" alt=""><span aria-hidden="true">✦</span></div>
+    <div class="celebration-team"><img src="assets/characters/person-4.webp" alt="4号厉sir"><img src="assets/characters/person-3.webp" alt="3号马sir"><img src="assets/characters/person-2.webp" alt="2号龚sir"></div>
     <h2 class="celebration-title" id="celebrationTitle"></h2>
     <p class="celebration-caption" id="celebrationCaption"></p>
+    <p class="celebration-hint">点击任意位置，立即继续</p>
   </div>
 </div>
-<script src="celebration.js"></script>
+<script src="celebration.js?v=20261010-2"></script>
 <!-- 碰撞形状数据（按贴图轮廓自动生成，由 tools/build_parts.py 产出） -->
-<script src="assets/characters/parts.js"></script>
+<script src="assets/characters/parts.js?v=20261010-2"></script>
 <!-- 极模糊占位图（内联 data URL，由 tools/make_blur.py 产出）：贴图没到位时先画它 -->
-<script src="assets/characters/blur.js"></script>
-<script src="game.js"></script>
+<script src="assets/characters/blur.js?v=20261010-2"></script>
+<script src="game.js?v=20261010-2"></script>
 <!-- 排行榜 -->
 <script src="leaderboard.js"></script>
 

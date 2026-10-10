@@ -9,27 +9,35 @@
   };
   const root = document.getElementById('celebration');
   const title = document.getElementById('celebrationTitle');
+  const kicker = document.getElementById('celebrationKicker');
   const portrait = document.getElementById('celebrationPortrait');
   const caption = document.getElementById('celebrationCaption');
   const confetti = document.getElementById('celebrationConfetti');
   const colors = ['#ff637f','#ffc83d','#51c7e8','#a07dff','#fff4b3','#6bdca1'];
   let timer = null;
+  let dismissedPointer = null;
+  let suppressClick = false;
 
   function clear() {
     if (timer !== null) clearTimeout(timer);
     timer = null;
     root.hidden = true;
-    root.classList.remove('is-celebrating', 'is-final', 'is-preview');
+    root.classList.remove('is-celebrating', 'is-final', 'is-preview', 'is-clearing', 'is-achievement');
     confetti.textContent = '';
   }
   function show(number, options = {}) {
-    if (!Object.prototype.hasOwnProperty.call(messages, number)) return false;
+    const isClear = !!options.clearBonus;
+    const isAchievement = !!options.achievement;
+    if (!isClear && !Object.prototype.hasOwnProperty.call(messages, number)) return false;
     const isFinal = Number(number) === 1;
     clear();
-    title.textContent = messages[number];
+    if (kicker) kicker.textContent = isAchievement ? '成 就 解 锁' : (isClear ? '清 屏 时 刻' : '恭 喜 合 成');
+    title.textContent = isAchievement ? '达成成就：马嘉妮' : (isClear ? '清屏奖励 +' + options.clearBonus : messages[number]);
     portrait.src = 'assets/characters/person-' + number + '.webp';
-    portrait.alt = messages[number];
-    caption.textContent = Number(number) === 1 ? '最高等级达成 · 大书记登场！' : '书记登场，继续向大书记进发！';
+    portrait.alt = isClear ? number + '号隐藏人物' : messages[number];
+    caption.textContent = isAchievement ? '2、3、4 号同场登场！' : (isClear ? '合成 ' + number + ' 号 · 全场爆散，继续挑战！' : (isFinal ? '大书记登场 · 还能继续合成隐藏人物！' : '书记登场，继续向大书记进发！'));
+    root.classList.toggle('is-achievement', isAchievement);
+    root.classList.toggle('is-clearing', isClear);
     root.classList.toggle('is-final', Number(number) === 1);
     root.classList.toggle('is-preview', !!options.persistent);
     const fragment = document.createDocumentFragment();
@@ -49,8 +57,45 @@
     root.hidden = false;
     void root.offsetWidth;
     root.classList.add('is-celebrating');
-    if (!options.persistent) timer = setTimeout(clear, isFinal ? 3800 : 1200);
+    if (!options.persistent) timer = setTimeout(clear, isAchievement ? 2200 : (isClear ? 1800 : (isFinal ? 3800 : 1200)));
     return true;
   }
-  window.DashujiCelebration = { show, clear };
+  // 吃掉关闭动画的整次点击，避免触屏松手或鼠标点击顺便投放人物。
+  document.addEventListener('pointerdown', (event) => {
+    if (root.hidden) return;
+    dismissedPointer = event.pointerId;
+    suppressClick = true;
+    clear();
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, { capture: true, passive: false });
+  document.addEventListener('pointerup', (event) => {
+    if (dismissedPointer !== null && event.pointerId === dismissedPointer) {
+      dismissedPointer = null;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    } else if (!root.hidden && event.pointerType === 'touch') {
+      clear();
+      suppressClick = true;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, { capture: true, passive: false });
+  document.addEventListener('pointercancel', () => { dismissedPointer = null; suppressClick = false; }, true);
+  document.addEventListener('click', (event) => {
+    if (suppressClick || !root.hidden) {
+      suppressClick = false;
+      clear();
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+  document.addEventListener('keydown', (event) => {
+    if (!root.hidden && ['Escape', 'Space', 'Enter'].includes(event.code)) {
+      clear();
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+  window.DashujiCelebration = { show, clear, showClear(number, bonus) { return show(number, {clearBonus: bonus}); }, showAchievement() { return show(3, {achievement: true}); } };
 })();

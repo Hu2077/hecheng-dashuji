@@ -4,7 +4,9 @@
   z-index: 100;
   display: grid;
   place-items: center;
-  pointer-events: none;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
   overflow: hidden;
   background: radial-gradient(ellipse at center, rgba(255,248,222,.96) 0%, rgba(255,233,170,.72) 48%, rgba(255,248,228,.46) 100%);
 }
@@ -56,6 +58,18 @@
   text-shadow: 0 3px 0 white, 0 8px 20px rgba(155,66,21,.18);
 }
 .celebration-caption { margin: 0; font-size: clamp(12px, 2vw, 18px); font-weight: 600; color: #94734e; }
+.celebration-hint { margin: 16px 0 0; font-size: 13px; color: #9c7c55; }
+.celebration-team { display: none; }
+.is-achievement .celebration-portrait { display: none; }
+.is-achievement .celebration-team { display: flex; justify-content: center; align-items: center; gap: 10px; }
+.celebration-team img { width: clamp(75px, 22vw, 170px); height: clamp(110px, 28vh, 240px); object-fit: contain; background: radial-gradient(ellipse, #fff7e0, transparent 70%); filter: drop-shadow(0 8px 10px rgba(138,88,32,.18)); }
+.is-achievement .celebration-team img:nth-child(2) { transform: scale(1.12); }
+.celebration-wave { display: none; }
+.is-clearing { background: radial-gradient(ellipse, rgba(221,255,240,.95), rgba(178,244,226,.72) 50%, rgba(233,255,247,.45)); }
+.is-clearing .celebration-title { color: #15866d; }
+.is-clearing .celebration-wave { display: block; position: absolute; width: 22vmin; height: 22vmin; border: 12px solid rgba(61,207,170,.65); border-radius: 50%; animation: clear-wave 1.1s ease-out both; }
+.is-clearing .celebration-wave:nth-child(2) { animation-delay: .12s; border-color: rgba(255,213,88,.65); }
+@keyframes clear-wave { from { transform: scale(.2); opacity: 1; } to { transform: scale(12); opacity: 0; } }
 .is-final .celebration-title { color: #b77916; }
 .is-final .celebration-portrait { box-shadow: 0 0 0 12px rgba(255,255,255,.4), 0 0 85px rgba(242,182,52,.75); }
 .celebration-confetti { position: absolute; inset: 0; z-index: 3; }
@@ -89,6 +103,6 @@
   .celebration-title { margin-top: 16px; font-size: clamp(24px,5vw,42px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .celebration-glow, .is-celebrating .celebration-card { animation: none; }
+  .celebration-glow, .celebration-wave, .is-celebrating .celebration-card { animation: none; }
   .celebration-piece { display: none; }
 }
