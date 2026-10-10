@@ -5,7 +5,10 @@
     4: '合成书记：厉sir！',
     3: '合成书记，马sir！',
     2: '合成书记，龚sir！',
-    1: '恭喜合成大书记：竹sir！'
+    1: '恭喜合成大书记：竹sir！',
+    0: '恭喜合成大书记：杨sir！',
+    '-1': '恭喜合成大书记：鲁sir！',
+    '-2': '恭喜合成大书记：竹sir！'
   };
   const root = document.getElementById('celebration');
   const title = document.getElementById('celebrationTitle');
@@ -32,10 +35,10 @@
     const isFinal = Number(number) === 1;
     clear();
     if (kicker) kicker.textContent = isAchievement ? '成 就 解 锁' : (isClear ? '清 屏 时 刻' : '恭 喜 合 成');
-    title.textContent = isAchievement ? '达成成就：马嘉妮' : (isClear ? '清屏奖励 +' + options.clearBonus : messages[number]);
+    title.textContent = isAchievement ? '达成成就：马嘉妮' : (messages[number] || '清屏奖励 +' + options.clearBonus);
     portrait.src = 'assets/characters/person-' + number + '.webp';
-    portrait.alt = isClear ? number + '号隐藏人物' : messages[number];
-    caption.textContent = isAchievement ? '2、3、4 号同场登场！' : (isClear ? '合成 ' + number + ' 号 · 全场爆散，继续挑战！' : (isFinal ? '大书记登场 · 还能继续合成隐藏人物！' : '书记登场，继续向大书记进发！'));
+    portrait.alt = messages[number] || number + '号隐藏人物';
+    caption.textContent = isAchievement ? '2、3、4 号同场登场！' : (isClear ? '清屏奖励 +' + options.clearBonus + ' 分 · 继续挑战！' : (isFinal ? '大书记登场 · 还能继续合成隐藏人物！' : '书记登场，继续向大书记进发！'));
     root.classList.toggle('is-achievement', isAchievement);
     root.classList.toggle('is-clearing', isClear);
     root.classList.toggle('is-final', Number(number) === 1);
