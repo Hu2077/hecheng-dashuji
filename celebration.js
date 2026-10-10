@@ -60,7 +60,7 @@
     root.hidden = false;
     void root.offsetWidth;
     root.classList.add('is-celebrating');
-    if (!options.persistent) timer = setTimeout(clear, isAchievement ? 2200 : (isClear ? 1800 : (isFinal ? 3800 : 1200)));
+    if (!options.persistent) timer = setTimeout(clear, isAchievement ? 2000 : (isClear ? 1800 : (isFinal ? 3800 : 1200)));
     return true;
   }
   // 吃掉关闭动画的整次点击，避免触屏松手或鼠标点击顺便投放人物。
